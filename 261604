@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.3/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: url('https://source.unsplash.com/random/1600x900?technology,abstract') no-repeat center center/cover;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+        .generate-btn {
+            background: linear-gradient(90deg, #ff7eb3 0%, #ff758c 100%);
+            transition: all 0.3s ease;
+        }
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(255, 117, 140, 0.3);
+        }
+        .download-btn {
+            background: linear-gradient(90deg, #36d1dc 0%, #5b86e5 100%);
+            transition: all 0.3s ease;
+        }
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(91, 134, 229, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto px-4 py-12 max-w-3xl text-center">
+        <h1 class="text-4xl font-bold mb-8 bg-gradient-to-r from-pink-600 to-blue-600 bg-clip-text text-transparent">
+            AI Image Generator
+        </h1>
+        <p class="mb-6 text-lg text-gray-700">Generate stunning AI-powered images based on your description.</p>
+        <div class="mb-8 flex gap-4">
+            <input id="promptInput" type="text" class="w-full px-6 py-4 rounded-xl border-2 border-gray-200 focus:border-pink-500 focus:ring-0 text-lg" placeholder="Enter your image description...">
+            <button id="generateBtn" class="generate-btn text-white px-8 py-4 rounded-xl text-lg font-semibold">Generate</button>
+        </div>
+        <div id="resultContainer" class="text-center hidden">
+            <div class="relative group">
+                <img id="generatedImage" class="mx-auto rounded-2xl shadow-lg w-full max-w-2xl transition-transform duration-300 group-hover:scale-105 cursor-pointer">
+                <button id="downloadBtn" class="mt-6 download-btn text-white px-8 py-3 rounded-lg absolute bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <i class="fas fa-download mr-2"></i>Download
+                </button>
+            </div>
+            <div class="spinner mt-8 mx-auto"></div>
+        </div>
+    </div>
+    <script>
+        const generateBtn = document.getElementById('generateBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const promptInput = document.getElementById('promptInput');
+        const resultContainer = document.getElementById('resultContainer');
+        const generatedImage = document.getElementById('generatedImage');
+        const spinner = document.querySelector('.spinner');
+
+        async function generateImage() {
+            const prompt = promptInput.value.trim();
+            if (!prompt) return;
+
+            resultContainer.classList.remove('hidden');
+            generatedImage.src = '';
+            downloadBtn.classList.add('hidden');
+            spinner.style.display = 'block';
+
+            try {
+                const response = await fetch('https://backend.buildpicoapps.com/aero/run/image-generation-api?pk=v1-Z0FBQUFBQm5zT0hYYVJVcXhSV1ZvdV9jRFZ0c05TUUdaTDRiNGxSUncwQVRHZkRqX3M0dDA0Z3J2eG01c2RTakI2Y2wzVjNJbnliMU5UamItek9TZ3NTc3dVaFRzdGRfRzFYakhzMHMyWFVlTFpRS2dMWVZiRVE9', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+                
+                const data = await response.json();
+                if (data.status === 'success') {
+                    generatedImage.src = data.imageUrl;
+                    downloadBtn.classList.remove('hidden');
+                    
+                    downloadBtn.onclick = () => {
+                        const link = document.createElement('a');
+                        link.href = data.imageUrl;
+                        link.download = `generated-image-${Date.now()}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    };
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Something went wrong! Please try again later.');
+            } finally {
+                spinner.style.display = 'none';
+            }
+        }
+
+        generateBtn.addEventListener('click', generateImage);
+        promptInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') generateImage();
+        });
+        
+        generatedImage.addEventListener('click', () => {
+            window.open(generatedImage.src, '_blank');
+        });
+    </script>
+</body>
+</html>
